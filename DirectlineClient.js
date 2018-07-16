@@ -1,12 +1,10 @@
 const fetch = require('node-fetch')
 const WebSocket = require('ws')
 const InMemory = require('./repositories/InMemory')
-var messageFromServer
+var messageFromServer = ''
 
 const {
-  BOT_DIRECTLINE_SECRET: SECRET,
-  INSTAPLY_MESSAGE_POST_ENDPOINT: POST_ENDPOINT,
-  INSTAPLY_MESSAGE_POST_TOKEN: TOKEN
+  BOT_DIRECTLINE_SECRET: SECRET
 } = process.env
 
 const directLineBase = 'https://directline.botframework.com'
@@ -60,7 +58,9 @@ function startConnection ({url, threadId}) {
         conversationMapping.get(activity.conversation.id)
           .then((threadId) => {
             console.log('POST API: ThreadId = ', threadId, 'convoId: ', activity.conversation.id)
-            messageFromServer = activity.text
+            if (activity.text !== undefined) {
+              messageFromServer += activity.text + '/n'
+            }
             console.log(messageFromServer)
           })
       }
@@ -157,6 +157,7 @@ const client = (req, response) => {
           'text': messageFromServer
         }
       })
+      messageFromServer = ''
     }
     ).catch((err) => {
       console.log(err.message)
