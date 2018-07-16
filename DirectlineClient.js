@@ -59,7 +59,7 @@ function startConnection ({url, threadId}) {
           .then((threadId) => {
             console.log('POST API: ThreadId = ', threadId, 'convoId: ', activity.conversation.id)
             if (activity.text !== undefined) {
-              messageFromServer += activity.text + '/n'
+              messageFromServer += activity.text + '\n'
             }
             console.log(messageFromServer)
           })
