@@ -1,0 +1,28 @@
+{
+  "name": "pokebot-kakao",
+  "version": "1.0.0",
+  "description": "This is Directline client for supoorting Kakao Talk",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/angie4u/pokebot-kakao.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/angie4u/pokebot-kakao/issues"
+  },
+  "homepage": "https://github.com/angie4u/pokebot-kakao#readme",
+  "dependencies": {
+    "dotenv-extended": "^2.0.2",
+    "open": "0.0.5",
+    "request-promise": "^4.2.2",
+    "restify": "^7.2.1",
+    "swagger-client": "^2.2.21",
+    "websocket": "^1.0.26"
+  }
+}
