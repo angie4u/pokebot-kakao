@@ -220,9 +220,15 @@ const client = (req, response) => {
       if (messageType == 1) {
         response.json(kakaoTextFormat)
         kakaoTextFormat = {}
-      } else {
+      } else if (messageType == 2) {
         response.json(kakaoImgTextFormat)
         kakaoImgTextFormat = {}
+      } else {
+        response.json({
+          'message': {
+            'text': '문제가 발생했습니다. 여러분의 인내심이 필요해요!'
+          }
+        })
       }
     }
     ).catch((err) => {
