@@ -96,7 +96,7 @@ function startConnection ({url, threadId}) {
                   'text': printText,
                   'photo': {
                     'url': imgUrl[0],
-                    'width': 640,
+                    'width': 480,
                     'height': 480
                   }
                 }
