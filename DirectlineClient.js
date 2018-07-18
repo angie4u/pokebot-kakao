@@ -2,6 +2,9 @@ const fetch = require('node-fetch')
 const WebSocket = require('ws')
 const InMemory = require('./repositories/InMemory')
 var messageFromServer = ''
+var messageType = 1
+var kakaoImgTextFormat = {}
+var kakaoTextFormat = {}
 
 const {
   BOT_DIRECTLINE_SECRET: SECRET
@@ -49,19 +52,56 @@ function startConnection ({url, threadId}) {
   })
   ws.on('message', (messageStr) => {
     // console.log('got message from websocket', messageStr)
+    // console.log(messageStr)
     const message = messageStr !== '' ? JSON.parse(messageStr) : {}
     if (message.activities) {
       // update conversation watermark
+      console.log(message.activities)
       repository.updateProperty(threadId, 'watermark', message.watermark)
       const activity = message.activities[0]
       if (activity.from.name) {
         conversationMapping.get(activity.conversation.id)
           .then((threadId) => {
             console.log('POST API: ThreadId = ', threadId, 'convoId: ', activity.conversation.id)
-            if (activity.text !== undefined) {
-              messageFromServer += activity.text + '\n'
+            console.log(activity.attachments)
+            if (activity.attachments == undefined) {
+              // there is no attachment, so just parsing the text
+              if (activity.text !== undefined) {
+                messageFromServer += activity.text + '\n'
+                kakaoTextFormat = {
+                  'message': {
+                    'text': messageFromServer
+                  }
+                }
+              }
+
+              // console.log(messageFromServer)
+            } else if (activity.attachments[0].content.type === 'AdaptiveCard') {
+              // there is a attachment, so we need to parse adaptive card
+
+              messageType = 2
+              var body = activity.attachments[0].content.body[0].columns
+              var factSetArray = []
+              var imgUrl = []
+              var textBlock = []
+              processCard(body, imgUrl, textBlock, factSetArray)
+              console.log('factest:' + factSetArray)
+              console.log('img:' + imgUrl)
+              console.log('text:' + textBlock)
+
+              var printText = parseArray(textBlock) + '\n' + parseArray(factSetArray)
+              kakaoImgTextFormat =
+              {
+                'message': {
+                  'text': printText,
+                  'photo': {
+                    'url': imgUrl[0],
+                    'width': 640,
+                    'height': 480
+                  }
+                }
+              }
             }
-            console.log(messageFromServer)
           })
       }
     }
@@ -71,6 +111,31 @@ function startConnection ({url, threadId}) {
   })
 
   return resultPromise
+}
+
+function processCard (body, imgUrl, textBlock, factSetArray) {
+  // 목표 - 1.img Obj 값 추리기 2. TextBlock 값 추리기 3. FactSet값 추리기
+  body.forEach(element => {
+    element.items.forEach(item => {
+      if (item.type === 'Image') {
+        imgUrl.push(item.url)
+      } else if (item.type === 'TextBlock') {
+        textBlock.push(item.text)
+      } else if (item.type === 'FactSet') {
+        const factSet = item.facts[0].title + ' ' + item.facts[0].value
+        factSetArray.push(factSet)
+      }
+    })
+  })
+// console.log(parseArray(factSetArray))
+}
+
+function parseArray (arr) {
+  var temp = ''
+  arr.forEach(val => {
+    temp += val + '\n'
+  })
+  return temp.slice(0, -1)
 }
 
 function isConnectionOpen (threadId) {
@@ -152,12 +217,13 @@ const client = (req, response) => {
       // console.log('beforeSendingMessage')
       return sendMessageToBotConnector(threadId, msg)
     }).then(() => {
-      response.json({
-        'message': {
-          'text': messageFromServer
-        }
-      })
-      messageFromServer = ''
+      if (messageType == 1) {
+        response.json(kakaoTextFormat)
+        kakaoTextFormat = {}
+      } else {
+        response.json(kakaoImgTextFormat)
+        kakaoImgTextFormat = {}
+      }
     }
     ).catch((err) => {
       console.log(err.message)
