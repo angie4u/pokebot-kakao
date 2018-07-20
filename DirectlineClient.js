@@ -62,10 +62,11 @@ function startConnection ({url, threadId}) {
       if (activity.from.name) {
         conversationMapping.get(activity.conversation.id)
           .then((threadId) => {
-            console.log('POST API: ThreadId = ', threadId, 'convoId: ', activity.conversation.id)
+            console.log('POST API: ThreadId = ', threadId, 'convoId: ', activity.conversation.id, 'activity.text: ', activity.text)
             console.log(activity.attachments)
             if (activity.attachments == undefined) {
               // there is no attachment, so just parsing the text
+              // messageType = 1
               if (activity.text !== undefined) {
                 messageFromServer += activity.text + '\n'
                 kakaoTextFormat = {
@@ -164,6 +165,11 @@ function reconnectWebSocket (threadId) {
 }
 
 function sendMessageToBotConnector (threadId, message) {
+  // 땜빵용 코드
+  if (message == '그만') {
+    messageType = 1
+  }
+
   return repository.get(threadId)
     .then((convoObject) => {
       return convoObject.conversationId
