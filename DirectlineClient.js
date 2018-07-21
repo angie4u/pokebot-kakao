@@ -236,6 +236,7 @@ const client = (req, response) => {
           }
         })
       }
+      messageFromServer = ''
     }
     ).catch((err) => {
       console.log(err.message)
