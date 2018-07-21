@@ -1,6 +1,9 @@
 const fetch = require('node-fetch')
 const WebSocket = require('ws')
 const InMemory = require('./repositories/InMemory')
+const messageFormat = require('./utils/messageFormat')
+const processCard = require('./utils/processCard')
+const parseArray = require('./utils/parseArray')
 var messageFromServer = ''
 var messageType = 1
 var kakaoImgTextFormat = {}
@@ -69,17 +72,12 @@ function startConnection ({url, threadId}) {
               // messageType = 1
               if (activity.text !== undefined) {
                 messageFromServer += activity.text + '\n'
-                kakaoTextFormat = {
-                  'message': {
-                    'text': messageFromServer
-                  }
-                }
+                kakaoTextFormat = messageFormat.kakaoTextFormat(messageFromServer)
               }
 
               // console.log(messageFromServer)
             } else if (activity.attachments[0].content.type === 'AdaptiveCard') {
               // there is a attachment, so we need to parse adaptive card
-
               messageType = 2
               var body = activity.attachments[0].content.body[0].columns
               var factSetArray = []
@@ -91,17 +89,7 @@ function startConnection ({url, threadId}) {
               console.log('text:' + textBlock)
 
               var printText = parseArray(textBlock) + '\n' + parseArray(factSetArray)
-              kakaoImgTextFormat =
-              {
-                'message': {
-                  'text': printText,
-                  'photo': {
-                    'url': imgUrl[0],
-                    'width': 480,
-                    'height': 480
-                  }
-                }
-              }
+              kakaoImgTextFormat = messageFormat.kakaoImgTextFormat(printText, imgUrl[0])
             }
           })
       }
@@ -112,31 +100,6 @@ function startConnection ({url, threadId}) {
   })
 
   return resultPromise
-}
-
-function processCard (body, imgUrl, textBlock, factSetArray) {
-  // 목표 - 1.img Obj 값 추리기 2. TextBlock 값 추리기 3. FactSet값 추리기
-  body.forEach(element => {
-    element.items.forEach(item => {
-      if (item.type === 'Image') {
-        imgUrl.push(item.url)
-      } else if (item.type === 'TextBlock') {
-        textBlock.push(item.text)
-      } else if (item.type === 'FactSet') {
-        const factSet = item.facts[0].title + ' ' + item.facts[0].value
-        factSetArray.push(factSet)
-      }
-    })
-  })
-// console.log(parseArray(factSetArray))
-}
-
-function parseArray (arr) {
-  var temp = ''
-  arr.forEach(val => {
-    temp += val + '\n'
-  })
-  return temp.slice(0, -1)
 }
 
 function isConnectionOpen (threadId) {
