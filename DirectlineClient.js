@@ -2,12 +2,8 @@ const fetch = require('node-fetch')
 const WebSocket = require('ws')
 const InMemory = require('./repositories/InMemory')
 const messageFormat = require('./utils/messageFormat')
-const processCard = require('./utils/processCard')
-const parseArray = require('./utils/parseArray')
-var messageFromServer = ''
-var messageType = 1
-var kakaoImgTextFormat = {}
-var kakaoTextFormat = {}
+const processActivities = require('./utils/processActivities')
+var messageObject = { 'imgUrl': '', 'textMessage': ''}
 
 const {
   BOT_DIRECTLINE_SECRET: SECRET
@@ -55,8 +51,10 @@ function startConnection ({url, threadId}) {
   })
   ws.on('message', (messageStr) => {
     // console.log('got message from websocket', messageStr)
-    // console.log(messageStr)
+
     const message = messageStr !== '' ? JSON.parse(messageStr) : {}
+    console.log(message)
+
     if (message.activities) {
       // update conversation watermark
       console.log(message.activities)
@@ -67,29 +65,11 @@ function startConnection ({url, threadId}) {
           .then((threadId) => {
             console.log('POST API: ThreadId = ', threadId, 'convoId: ', activity.conversation.id, 'activity.text: ', activity.text)
             console.log(activity.attachments)
-            if (activity.attachments == undefined) {
-              // there is no attachment, so just parsing the text
-              // messageType = 1
-              if (activity.text !== undefined) {
-                messageFromServer += activity.text + '\n'
-                kakaoTextFormat = messageFormat.kakaoTextFormat(messageFromServer)
-              }
-
-              // console.log(messageFromServer)
-            } else if (activity.attachments[0].content.type === 'AdaptiveCard') {
-              // there is a attachment, so we need to parse adaptive card
-              messageType = 2
-              var body = activity.attachments[0].content.body[0].columns
-              var factSetArray = []
-              var imgUrl = []
-              var textBlock = []
-              processCard(body, imgUrl, textBlock, factSetArray)
-              console.log('factest:' + factSetArray)
-              console.log('img:' + imgUrl)
-              console.log('text:' + textBlock)
-
-              var printText = parseArray(textBlock) + '\n' + parseArray(factSetArray)
-              kakaoImgTextFormat = messageFormat.kakaoImgTextFormat(printText, imgUrl[0])
+            if (activity.type !== 'typing') {
+              // console.log('msgFromServer: ' + messageFromServer)
+              console.log(messageObject)
+              messageObject = processActivities(activity, messageObject)
+              // console.log(messageToUSer)
             }
           })
       }
@@ -128,11 +108,6 @@ function reconnectWebSocket (threadId) {
 }
 
 function sendMessageToBotConnector (threadId, message) {
-  // 땜빵용 코드
-  if (message == '그만') {
-    messageType = 1
-  }
-
   return repository.get(threadId)
     .then((convoObject) => {
       return convoObject.conversationId
@@ -186,22 +161,16 @@ const client = (req, response) => {
       // console.log('beforeSendingMessage')
       return sendMessageToBotConnector(threadId, msg)
     }).then(() => {
-      if (messageType == 1) {
-        response.json(kakaoTextFormat)
-        kakaoTextFormat = {}
-      } else if (messageType == 2) {
-        response.json(kakaoImgTextFormat)
-        kakaoImgTextFormat = {}
+      console.log(messageObject)
+      var result
+      if (messageObject.imgUrl === '') {
+        result = messageFormat.kakaoTextFormat(messageObject.textMessage)
       } else {
-        response.json({
-          'message': {
-            'text': '문제가 발생했습니다. 여러분의 인내심이 필요해요!'
-          }
-        })
+        result = messageFormat.kakaoImgTextFormat(messageObject.textMessage, messageObject.imgUrl)
       }
-      messageFromServer = ''
-    }
-    ).catch((err) => {
+      response.json(result)
+      messageObject = { 'imgUrl': '', 'textMessage': ''}
+    }).catch((err) => {
       console.log(err.message)
     })
 }
