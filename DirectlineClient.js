@@ -5,6 +5,7 @@ const messageFormat = require('./utils/messageFormat')
 const processActivities = require('./utils/processActivities')
 var messageObject = { 'imgUrl': '', 'textMessage': ''}
 
+
 const {
   BOT_DIRECTLINE_SECRET: SECRET
 } = process.env
@@ -65,11 +66,13 @@ function startConnection ({url, threadId}) {
           .then((threadId) => {
             console.log('POST API: ThreadId = ', threadId, 'convoId: ', activity.conversation.id, 'activity.text: ', activity.text)
             console.log(activity.attachments)
+
             if (activity.type !== 'typing') {
               // console.log('msgFromServer: ' + messageFromServer)
               console.log(messageObject)
               messageObject = processActivities(activity, messageObject)
               // console.log(messageToUSer)
+
             }
           })
       }
@@ -168,9 +171,11 @@ const client = (req, response) => {
       } else {
         result = messageFormat.kakaoImgTextFormat(messageObject.textMessage, messageObject.imgUrl)
       }
+
       response.json(result)
       messageObject = { 'imgUrl': '', 'textMessage': ''}
     }).catch((err) => {
+
       console.log(err.message)
     })
 }
