@@ -5,7 +5,6 @@ const messageFormat = require('./utils/messageFormat')
 const processActivities = require('./utils/processActivities')
 var messageObject = { 'imgUrl': '', 'textMessage': ''}
 
-
 const {
   BOT_DIRECTLINE_SECRET: SECRET
 } = process.env
@@ -72,7 +71,6 @@ function startConnection ({url, threadId}) {
               console.log(messageObject)
               messageObject = processActivities(activity, messageObject)
               // console.log(messageToUSer)
-
             }
           })
       }
@@ -175,7 +173,6 @@ const client = (req, response) => {
       response.json(result)
       messageObject = { 'imgUrl': '', 'textMessage': ''}
     }).catch((err) => {
-
       console.log(err.message)
     })
 }
