@@ -19,10 +19,12 @@
   "homepage": "https://github.com/angie4u/pokebot-kakao#readme",
   "dependencies": {
     "dotenv-extended": "^2.0.2",
+    "node-fetch": "^2.2.0",
     "open": "0.0.5",
     "request-promise": "^4.2.2",
     "restify": "^7.2.1",
     "swagger-client": "^2.2.21",
-    "websocket": "^1.0.26"
+    "websocket": "^1.0.26",
+    "ws": "^6.0.0"
   }
 }
